@@ -8,3 +8,4 @@ As a post is published the `master` branch's `README.md` file will be updated wi
 
 | Date | Post | Branch | Demo Site |
 | ---- | ---- | ------ | --------- |
+| 2019-01-20 | Hexo Serverless | [2019-01-20-hexo-serverless](https://github.com/nibynool/hexo-serverless-example/tree/2019-01-20-hexo-serverless) | https://2019-01-20-hexo-serverless.demo.alphageek.com.au |
