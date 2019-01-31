@@ -6,6 +6,5 @@ As a post is published the `master` branch's `README.md` file will be updated wi
 
 # Posts, Branches and Demonstration Sites
 
-| Post | Branch | Demo Site |
-| ---- | ------ | --------- |
-
+| Date | Post | Branch | Demo Site |
+| ---- | ---- | ------ | --------- |
