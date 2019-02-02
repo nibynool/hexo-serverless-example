@@ -3,11 +3,13 @@ Resources:
   WebsiteS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      AccessControl: PublicRead
-      WebsiteConfiguration:
-        IndexDocument: index.html
-        ErrorDocument: error.html
+      AccessControl: BucketOwnerFullControl
       BucketName: ${self:custom.domain.domainname}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
   # Set-up a policy on the bucket so it can be used as a website
   WebsiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -19,9 +21,13 @@ Resources:
             - - ${self:service.name}
               - BucketPolicy
         Statement:
-          - Sid: PublicReadForGetBucketObjects
+          - Sid: CloudFrontForGetBucketObjects
             Effect: Allow
-            Principal: '*'
+            Principal:
+              CanonicalUser:
+                Fn::GetAtt:
+                  - CloudFrontIdentity
+                  - S3CanonicalUserId
             Action: 's3:GetObject'
             Resource:
               Fn::Join:
@@ -59,12 +65,18 @@ Resources:
         DefaultRootObject: index.html
         Enabled: true
         Origins:
-          - DomainName: ${self:custom.domain.domainname}.${self:custom.s3DNSName.${self:provider.region}}
+          - DomainName:
+              Fn::GetAtt:
+                - WebsiteS3Bucket
+                - DomainName
             Id: defaultOrigin
-            CustomOriginConfig:
-              HTTPPort: 80
-              HTTPSPort: 443
-              OriginProtocolPolicy: http-only
+            S3OriginConfig:
+              OriginAccessIdentity:
+                Fn::Join:
+                  - "/"
+                  - - origin-access-identity
+                    - cloudfront
+                    - Ref: CloudFrontIdentity
         PriceClass: PriceClass_100
         ViewerCertificate:
           AcmCertificateArn: ${self:custom.domain.sslCertificateARN}
@@ -144,3 +156,13 @@ Resources:
             Ref: CustomAuthorizationHeader
           Negated: false
           Type: ByteMatch
+  CloudFrontIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment:
+          Fn::Join:
+            - " "
+            - - ${self:custom.domain.domainname}
+              - CloudFront
+              - Identity

@@ -5,6 +5,8 @@ service: alphageekdemo-${self:custom.postname}
 plugins:
   - serverless-s3-deploy
   - serverless-plugin-scripts
+  - serverless-lambda-version
+  - '@silvermine/serverless-plugin-cloudfront-lambda-edge'
 
 # Configuration for AWS
 provider:
@@ -19,7 +21,7 @@ provider:
 # Custom configuration options
 custom:
   # This is only required so I can maintain multiple demonstration sites
-  postname: 2019-01-23-securing-test-environment
+  postname: 2019-01-28-securing-s3
   # This enables us to use the default stage definition, but override it from the command line
   stage: ${opt:stage, self:provider.stage}
   # This enables us to prepend the stage name for non-production environments
@@ -44,6 +46,7 @@ custom:
       # Configuration for HTML files (overriding the default cache control age)
       - bucket:
           Ref: WebsiteS3Bucket
+        acl: private
         files:
           - source: ./public/
             headers:
@@ -54,6 +57,7 @@ custom:
       # Configuration for all assets
       - bucket:
           Ref: WebsiteS3Bucket
+        acl: private
         files:
           - source: ./public/
             empty: true
@@ -96,6 +100,18 @@ custom:
   customConfigFiles:
     prod: prod
     other: other
+
+# Define the Lambda functions for the site
+functions:
+  # This function will be deployed to Lambda@Edge and rewrite URLs to include index.html
+  urlrewrite:
+    name: ${self:service}-${self:custom.stage}-cf-url-rewriter
+    handler: functions/urlRewrite.handler
+    memorySize: 128
+    timeout: 1
+    lambdaAtEdge:
+      distribution: WebsiteCloudFrontDistribution
+      eventType: origin-request
 
 # Define the resources we will need to host the site
 resources:
