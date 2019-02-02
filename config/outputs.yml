@@ -1,0 +1,17 @@
+Outputs:
+  WebsiteURL:
+    Value:
+      Fn::GetAtt:
+        - WebsiteS3Bucket
+        - WebsiteURL
+    Description: URL for Alphageek demonstration website hosted on S3
+  S3BucketSecureURL:
+    Value:
+      Fn::Join:
+        - ''
+        -
+          - 'https://'
+          - Fn::GetAtt:
+              - WebsiteS3Bucket
+              - DomainName
+    Description: Secure URL of S3 bucket to hold website content

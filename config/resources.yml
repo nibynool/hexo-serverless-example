@@ -1,0 +1,146 @@
+Resources:
+  # Set-up an S3 bucket to store the site
+  WebsiteS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      BucketName: ${self:custom.domain.domainname}
+  # Set-up a policy on the bucket so it can be used as a website
+  WebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      PolicyDocument:
+        Id:
+          Fn::Join:
+            - ""
+            - - ${self:service.name}
+              - BucketPolicy
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource:
+              Fn::Join:
+                - ''
+                -
+                  - 'arn:aws:s3:::'
+                  - Ref: WebsiteS3Bucket
+                  - /*
+      Bucket:
+        Ref: WebsiteS3Bucket
+  # Configure CloudFront to get all content from S3
+  WebsiteCloudFrontDistribution:
+    Type: 'AWS::CloudFront::Distribution'
+    Properties:
+      DistributionConfig:
+        WebACLId:
+          Ref: CustomAuthorizationHeaderRestriction
+        Aliases:
+          - ${self:custom.domain.domainname}
+          - www.${self:custom.domain.domainname}
+        CustomErrorResponses:
+          - ErrorCode: '404'
+            ResponsePagePath: "/error.html"
+            ResponseCode: '200'
+            ErrorCachingMinTTL: '30'
+        DefaultCacheBehavior:
+          Compress: true
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: all
+          SmoothStreaming: false
+          TargetOriginId: defaultOrigin
+          ViewerProtocolPolicy: redirect-to-https
+        DefaultRootObject: index.html
+        Enabled: true
+        Origins:
+          - DomainName: ${self:custom.domain.domainname}.${self:custom.s3DNSName.${self:provider.region}}
+            Id: defaultOrigin
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: http-only
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          AcmCertificateArn: ${self:custom.domain.sslCertificateARN}
+          SslSupportMethod: sni-only
+  # DNS Record for the domain
+  WebsiteDNSRecord:
+    Type: "AWS::Route53::RecordSet"
+    Properties:
+      AliasTarget:
+        DNSName:
+          Fn::GetAtt:
+            - WebsiteCloudFrontDistribution
+            - DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+      # DNS Zone name (this is only required so I can maintain multiple demonstration sites, normally it would be `domain` instead of `zonename`)
+      HostedZoneName: ${self:custom.domain.zonename}.
+      Name: ${self:custom.domain.domainname}
+      Type: 'A'
+  # DNS Record for www.domain
+  WebsiteWWWDNSRecord:
+    Type: "AWS::Route53::RecordSet"
+    Properties:
+      AliasTarget:
+        DNSName:
+          Fn::GetAtt:
+            - WebsiteCloudFrontDistribution
+            - DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+      # DNS Zone name (this is only required so I can maintain multiple demonstration sites, normally it would be `domain` instead of `zonename`)
+      HostedZoneName: ${self:custom.domain.zonename}.
+      Name: www.${self:custom.domain.domainname}
+      Type: 'A'
+  # Predicate to match the authorization header
+  CustomAuthorizationHeader:
+    Type: AWS::WAF::ByteMatchSet
+    Properties:
+      ByteMatchTuples:
+        -
+          FieldToMatch:
+            Type: HEADER
+            Data: Authorization
+          TargetString:
+            Fn::Join:
+              - " "
+              - - Custom
+                - "Password"
+          TextTransformation: NONE
+          PositionalConstraint: EXACTLY
+      Name:
+        Fn::Join:
+          - "_"
+          - - ${self:custom.domain.domainname}
+            - Authorization
+            - Header
+  CustomAuthorizationHeaderRule:
+    Type: AWS::WAF::Rule
+    Properties:
+      Name:
+        Fn::Join:
+          - "_"
+          - - ${self:custom.domain.domainname}
+            - Authorization
+            - Header
+            - Rule
+      MetricName:
+        Fn::Join:
+          - ""
+          - - ${self:custom.stage}
+            # This value has been customised as the service name is not compatible with the permitted AWS naming scheme
+            - Fn::Join: [ "", Fn::Split: [ "-", "${self:service.name}" ] ]
+            - Authorization
+            - Header
+            - Rule
+      Predicates:
+        -
+          DataId:
+            Ref: CustomAuthorizationHeader
+          Negated: false
+          Type: ByteMatch

@@ -19,7 +19,7 @@ provider:
 # Custom configuration options
 custom:
   # This is only required so I can maintain multiple demonstration sites
-  postname: 2019-01-20-hexo-serverless
+  postname: 2019-01-23-securing-test-environment
   # This enables us to use the default stage definition, but override it from the command line
   stage: ${opt:stage, self:provider.stage}
   # This enables us to prepend the stage name for non-production environments
@@ -91,120 +91,17 @@ custom:
     eu-west-3: s3-website.eu-west-3.amazonaws.com
     eu-north-1: s3-website.eu-north-1.amazonaws.com
     sa-east-1: s3-website-sa-east-1.amazonaws.com
+  # Determine what resources file to include based on the current stage
+  customConfigFile: ${self:custom.customConfigFiles.${self:custom.stage}, self:custom.customConfigFiles.other}
+  customConfigFiles:
+    prod: prod
+    other: other
 
 # Define the resources we will need to host the site
 resources:
-  Resources:
-    # Set-up an S3 bucket to store the site
-    WebsiteS3Bucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        AccessControl: PublicRead
-        WebsiteConfiguration:
-          IndexDocument: index.html
-          ErrorDocument: error.html
-        BucketName: ${self:custom.domain.domainname}
-    # Set-up a policy on the bucket so it can be used as a website
-    WebsiteBucketPolicy:
-      Type: AWS::S3::BucketPolicy
-      Properties:
-        PolicyDocument:
-          Id:
-            Fn::Join:
-              - ""
-              - - ${self:service.name}
-                - BucketPolicy
-          Statement:
-            - Sid: PublicReadForGetBucketObjects
-              Effect: Allow
-              Principal: '*'
-              Action: 's3:GetObject'
-              Resource:
-                Fn::Join:
-                  - ''
-                  -
-                    - 'arn:aws:s3:::'
-                    - Ref: WebsiteS3Bucket
-                    - /*
-        Bucket:
-          Ref: WebsiteS3Bucket
-    # Configure CloudFront to get all content from S3
-    WebsiteCloudFrontDistribution:
-      Type: 'AWS::CloudFront::Distribution'
-      Properties:
-        DistributionConfig:
-          Aliases:
-            - ${self:custom.domain.domainname}
-            - www.${self:custom.domain.domainname}
-          CustomErrorResponses:
-            - ErrorCode: '404'
-              ResponsePagePath: "/error.html"
-              ResponseCode: '200'
-              ErrorCachingMinTTL: '30'
-          DefaultCacheBehavior:
-            Compress: true
-            ForwardedValues:
-              QueryString: false
-              Cookies:
-                Forward: all
-            SmoothStreaming: false
-            TargetOriginId: defaultOrigin
-            ViewerProtocolPolicy: redirect-to-https
-          DefaultRootObject: index.html
-          Enabled: true
-          Origins:
-            - DomainName: ${self:custom.domain.domainname}.${self:custom.s3DNSName.${self:provider.region}}
-              Id: defaultOrigin
-              CustomOriginConfig:
-                HTTPPort: 80
-                HTTPSPort: 443
-                OriginProtocolPolicy: http-only
-          PriceClass: PriceClass_100
-          ViewerCertificate:
-            AcmCertificateArn: ${self:custom.domain.sslCertificateARN}
-            SslSupportMethod: sni-only
-    # DNS Record for the domain
-    WebsiteDNSRecord:
-      Type: "AWS::Route53::RecordSet"
-      Properties:
-        AliasTarget:
-          DNSName:
-            Fn::GetAtt:
-              - WebsiteCloudFrontDistribution
-              - DomainName
-          HostedZoneId: Z2FDTNDATAQYW2
-        # DNS Zone name (this is only required so I can maintain multiple demonstration sites, normally it would be `domain` instead of `zonename`)
-        HostedZoneName: ${self:custom.domain.zonename}.
-        Name: ${self:custom.domain.domainname}
-        Type: 'A'
-    # DNS Record for www.domain
-    WebsiteWWWDNSRecord:
-      Type: "AWS::Route53::RecordSet"
-      Properties:
-        AliasTarget:
-          DNSName:
-            Fn::GetAtt:
-              - WebsiteCloudFrontDistribution
-              - DomainName
-          HostedZoneId: Z2FDTNDATAQYW2
-        # DNS Zone name (this is only required so I can maintain multiple demonstration sites, normally it would be `domain` instead of `zonename`)
-        HostedZoneName: ${self:custom.domain.zonename}.
-        Name: www.${self:custom.domain.domainname}
-        Type: 'A'
-  Outputs:
-    WebsiteURL:
-      Value:
-        Fn::GetAtt:
-          - WebsiteS3Bucket
-          - WebsiteURL
-      Description: URL for Alphageek demonstration website hosted on S3
-    S3BucketSecureURL:
-      Value:
-        Fn::Join:
-          - ''
-          -
-            - 'https://'
-            - Fn::GetAtt:
-                - WebsiteS3Bucket
-                - DomainName
-      Description: Secure URL of S3 bucket to hold website content
+  # Include the resources file
+  - ${file(config/resources.yml)}
+  # Include the outputs file
+  - ${file(config/outputs.yml)}
+  # Include a custom configuration file based on the environment
+  - ${file(config/${self:custom.customConfigFile}.yml)}
