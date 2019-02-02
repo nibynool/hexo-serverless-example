@@ -6,7 +6,8 @@ As a post is published the `master` branch's `README.md` file will be updated wi
 
 # Posts, Branches and Demonstration Sites
 
-| Date       | Post                                       | Branch                                                                                                                          | Demo Site                                                               |
-| ---------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| 2019-01-23 | Securing A Test Environment Using AWS WAF  | [2019-01-securing-test-environment](https://github.com/nibynool/hexo-serverless-example/tree/2019-01-securing-test-environment) | [Link](https://2019-01-securing-test-environment.demo.alphageek.com.au) |
-| 2019-01-20 | Hexo, AWS and Serverless Framework         | [2019-01-20-hexo-serverless](https://github.com/nibynool/hexo-serverless-example/tree/2019-01-20-hexo-serverless)               | [Link](https://2019-01-20-hexo-serverless.demo.alphageek.com.au)        |
+| Date       | Post                                       | Branch                                                                                                                             | Demo Site                                                               |
+| ---------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| 2019-01-28 | Securing S3 Bucket from Direct Access      | [2019-01-28-securing-s3](https://github.com/nibynool/hexo-serverless-example/tree/2019-01-28-securing-s3)                          | [Link](https://2019-01-28-securing-s3.demo.alphageek.com.au)            |
+| 2019-01-23 | Securing A Test Environment Using AWS WAF  | [2019-01-23-securing-test-environment](https://github.com/nibynool/hexo-serverless-example/tree/2019-01-securing-test-environment) | [Link](https://2019-01-securing-test-environment.demo.alphageek.com.au) |
+| 2019-01-20 | Hexo, AWS and Serverless Framework         | [2019-01-20-hexo-serverless](https://github.com/nibynool/hexo-serverless-example/tree/2019-01-20-hexo-serverless)                  | [Link](https://2019-01-20-hexo-serverless.demo.alphageek.com.au)        |
