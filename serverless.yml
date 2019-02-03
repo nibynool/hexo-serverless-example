@@ -5,7 +5,6 @@ service: alphageekdemo-${self:custom.postname}
 plugins:
   - serverless-s3-deploy
   - serverless-plugin-scripts
-  - serverless-lambda-version
   - '@silvermine/serverless-plugin-cloudfront-lambda-edge'
 
 # Configuration for AWS
