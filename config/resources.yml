@@ -43,8 +43,9 @@ Resources:
     Type: 'AWS::CloudFront::Distribution'
     Properties:
       DistributionConfig:
-        WebACLId:
-          Ref: CustomAuthorizationHeaderRestriction
+        # AWS WAF has been removed to save cost
+#        WebACLId:
+#          Ref: CustomAuthorizationHeaderRestriction
         Aliases:
           - ${self:custom.domain.domainname}
           - www.${self:custom.domain.domainname}
@@ -109,53 +110,55 @@ Resources:
       HostedZoneName: ${self:custom.domain.zonename}.
       Name: www.${self:custom.domain.domainname}
       Type: 'A'
-  # Predicate to match the authorization header
-  CustomAuthorizationHeader:
-    Type: AWS::WAF::ByteMatchSet
-    Properties:
-      ByteMatchTuples:
-        -
-          FieldToMatch:
-            Type: HEADER
-            Data: Authorization
-          TargetString:
-            Fn::Join:
-              - " "
-              - - Custom
-                - "Password"
-          TextTransformation: NONE
-          PositionalConstraint: EXACTLY
-      Name:
-        Fn::Join:
-          - "_"
-          - - ${self:custom.domain.domainname}
-            - Authorization
-            - Header
-  CustomAuthorizationHeaderRule:
-    Type: AWS::WAF::Rule
-    Properties:
-      Name:
-        Fn::Join:
-          - "_"
-          - - ${self:custom.domain.domainname}
-            - Authorization
-            - Header
-            - Rule
-      MetricName:
-        Fn::Join:
-          - ""
-          - - ${self:custom.stage}
-            # This value has been customised as the service name is not compatible with the permitted AWS naming scheme
-            - Fn::Join: [ "", Fn::Split: [ "-", "${self:service.name}" ] ]
-            - Authorization
-            - Header
-            - Rule
-      Predicates:
-        -
-          DataId:
-            Ref: CustomAuthorizationHeader
-          Negated: false
-          Type: ByteMatch
+
+  # AWS WAF has been removed to save cost
+#  # Predicate to match the authorization header
+#  CustomAuthorizationHeader:
+#    Type: AWS::WAF::ByteMatchSet
+#    Properties:
+#      ByteMatchTuples:
+#        -
+#          FieldToMatch:
+#            Type: HEADER
+#            Data: Authorization
+#          TargetString:
+#            Fn::Join:
+#              - " "
+#              - - Custom
+#                - "Password"
+#          TextTransformation: NONE
+#          PositionalConstraint: EXACTLY
+#      Name:
+#        Fn::Join:
+#          - "_"
+#          - - ${self:custom.domain.domainname}
+#            - Authorization
+#            - Header
+#  CustomAuthorizationHeaderRule:
+#    Type: AWS::WAF::Rule
+#    Properties:
+#      Name:
+#        Fn::Join:
+#          - "_"
+#          - - ${self:custom.domain.domainname}
+#            - Authorization
+#            - Header
+#            - Rule
+#      MetricName:
+#        Fn::Join:
+#          - ""
+#          - - ${self:custom.stage}
+#            # This value has been customised as the service name is not compatible with the permitted AWS naming scheme
+#            - Fn::Join: [ "", Fn::Split: [ "-", "${self:service.name}" ] ]
+#            - Authorization
+#            - Header
+#            - Rule
+#      Predicates:
+#        -
+#          DataId:
+#            Ref: CustomAuthorizationHeader
+#          Negated: false
+#          Type: ByteMatch
   CloudFrontIdentity:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
     Properties:
