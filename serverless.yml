@@ -10,7 +10,6 @@ plugins:
 provider:
   name: aws
   runtime: nodejs8.10
-  profile: serverless
   # Some future functionality requires us to use us-east-1 at this time
   region: us-east-1
   # This setting is only required for my internal S3 management
