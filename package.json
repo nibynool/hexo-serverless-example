@@ -37,7 +37,19 @@
     "a11ycheck": "pa11y-ci public/*.html public/*/*.html public/*/*/*.html public/*/*/*/*.html public/*/*/*/*/*.html || true",
     "validate": "npm run linkcheck && npm run htmlcheck && npm run a11ycheck",
     "buildtest-local": "npm run precheck && npm run cleanbuild && npm run validate",
-    "precommit": "npm run buildtest-local"
+    "precommit": "npm run buildtest-local",
+    "deploy-uat-infra": "npx serverless deploy -s dev",
+    "deploy-uat-site": "npx serverless s3deploy -s dev -v",
+    "deploy-uat": "npm run deploy-uat-infra && npm run deploy-uat-site",
+    "linkcheck-uat": "npx blc --filter-level 3 --get --recursive --exclude /atom.xml --exclude /favicon.png --exclude http://2019-01-28-securing-s3.demo.alphageek.com.au.s3-website-us-east-1.amazonaws.com --exclude http://localhost:4000 --exclude http://dev./%3Cyour_domain%3E/ --user-agent '<PASSWORD_DEFINED_IN_SERVERLESS_CONFIGURATION> Tester' http://dev.alphageek.com.au",
+    "test-uat": "npm run deploy-uat && npm run linkcheck-uat",
+    "buildtest-uat": "npm run buildtest-local && test-uat",
+    "deploy-prod-infra": "npx serverless deploy -s prod",
+    "deploy-prod-site": "npx serverless s3deploy -s prod -v",
+    "deploy-prod": "npm run deploy-prod-infra && npm run deploy-prod-site",
+    "linkcheck-prod": "npx blc --filter-level 3 --get --recursive --exclude /atom.xml --exclude /favicon.png --exclude http://2019-01-28-securing-s3.demo.alphageek.com.au.s3-website-us-east-1.amazonaws.com --exclude http://localhost:4000 --exclude http://dev./%3Cyour_domain%3E/ http://alphageek.com.au",
+    "test-prod": "npm run deploy-prod && npm run linkcheck-prod",
+    "buildtest-prod": "npm run buildtest-uat && test-prod"
   },
   "jest": {
     "testPathIgnorePatterns": [

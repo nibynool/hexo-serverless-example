@@ -159,6 +159,51 @@ Resources:
 #            Ref: CustomAuthorizationHeader
 #          Negated: false
 #          Type: ByteMatch
+#  CustomUserAgentHeader:
+#    Type: AWS::WAF::ByteMatchSet
+#    Properties:
+#      ByteMatchTuples:
+#        -
+#          FieldToMatch:
+#            Type: HEADER
+#            Data: User-Agent
+#          TargetString:
+#            Fn::Join:
+#              - " "
+#              - - ${self:custom.security.passwords.development}
+#                - "Tester"
+#          TextTransformation: NONE
+#          PositionalConstraint: EXACTLY
+#      Name:
+#        Fn::Join:
+#          - "_"
+#          - - ${self:custom.domain.domainname}
+#            - UserAgent
+#            - Header
+#  CustomUserAgentHeaderRule:
+#    Type: AWS::WAF::Rule
+#    Properties:
+#      Name:
+#        Fn::Join:
+#          - "_"
+#          - - ${self:custom.domain.domainname}
+#            - UserAgent
+#            - Header
+#            - Rule
+#      MetricName:
+#        Fn::Join:
+#          - ""
+#          - - ${self:custom.domain.domain}
+#            - ${self:custom.stage}
+#            - UserrAgent
+#            - Header
+#            - Rule
+#      Predicates:
+#        -
+#          DataId:
+#            Ref: CustomUserAgentHeader
+#          Negated: false
+#          Type: ByteMatch
   CloudFrontIdentity:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
     Properties:

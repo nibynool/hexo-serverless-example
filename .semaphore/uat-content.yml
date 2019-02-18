@@ -1,0 +1,36 @@
+version: v1.0
+name: AlphaGeek UAT Content Deployment Pipeline
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+blocks:
+  # Use Serverless to deploy to UAT
+  - name: Publish to UAT
+    task:
+      # Import the secret environment variables
+      secrets:
+        - name: alphageek-aws
+      prologue:
+        commands:
+          - checkout
+          - cache restore npm
+          - cache restore node-modules-$(checksum package-lock.json)
+          - cache restore public-$(find source -type f -exec cat {} + | checksum)
+      jobs:
+        - name: Deploy Content
+          commands:
+            - npm run deploy-uat-site
+  # Run tests on the UAT site
+  - name: Test UAT
+    task:
+      prologue:
+        commands:
+          - checkout
+          - cache restore npm
+          - cache restore node-modules-$(checksum package-lock.json)
+      jobs:
+        # Check that all links are valid
+        - name: Test link validity
+          commands:
+            - npm run linkcheck-uat

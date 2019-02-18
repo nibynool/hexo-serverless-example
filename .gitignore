@@ -9,3 +9,6 @@ jspm_packages
 db.json
 public/
 .deploy*/
+
+# Semaphore secret files
+.semaphore/secrets/*

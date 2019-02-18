@@ -79,3 +79,26 @@ blocks:
         - name: Test Accessibility
           commands:
             - npm run a11ycheck
+promotions:
+  # This configuration is for deploying both infrastructure and content for the demo site
+  - name: Deploy Content to Demo
+    pipeline_file: demo.yml
+    auto_promote_on:
+      - result: passed
+  # The following lines have been commented out as custom settings are required for our demonstration sites
+  #- name: Deploy Content to UAT
+  #  pipeline_file: uat-content.yml
+  #  auto_promote_on:
+  #    - result: passed
+  #      branch:
+  #        - develop
+  #- name: Deploy Infra to UAT
+  #  pipeline_file: uat-infra.yml
+  #- name: Deploy Content to Production
+  #  pipeline_file: prod-content.yml
+  #  auto_promote_on:
+  #    - result: passed
+  #      branch:
+  #        - master
+  #- name: Deploy Infra to Production
+  #  pipeline_file: prod-infra.yml

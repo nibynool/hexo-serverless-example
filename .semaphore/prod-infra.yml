@@ -1,0 +1,36 @@
+version: v1.0
+name: AlphaGeek Production Infrastructure Deployment Pipeline
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+blocks:
+  # Use serverless to deploy to UAT
+  - name: Publish to Production
+    task:
+      # Import the secret environment variables
+      secrets:
+        - name: alphageek-aws
+      prologue:
+        commands:
+          - checkout
+          - cache restore npm
+          - cache restore node-modules-$(checksum package-lock.json)
+      jobs:
+        - name: Deploy Infrastructure
+          commands:
+            - npm run deploy-prod-infra
+            - cache store serverless-$SEMAPHORE_GIT_BRANCH .serverless
+  # Run tests on the UAT site
+  - name: Test Production
+    task:
+      prologue:
+        commands:
+          - checkout
+          - cache restore npm
+          - cache restore node-modules-$(checksum package-lock.json)
+      jobs:
+        # Check that all links are valid
+        - name: Test link validity
+          commands:
+            - npm run linkcheck-prod

@@ -65,15 +65,6 @@ custom:
               - '**/*.jpg'
               - '**/*.png'
               - '**/*.gif'
-  scripts:
-    hooks:
-      # Run these commands when creating the deployment artifacts
-      package:createDeploymentArtifacts: >
-        hexo clean &&
-        hexo generate
-      # Run these commands after infrastructure changes have been completed
-      deploy:finalize: >
-        sls s3deploy -s ${self:custom.stage}
   # AWS Region to S3 website hostname mapping
   s3DNSName:
     us-east-2: s3-website.us-east-2.amazonaws.com
