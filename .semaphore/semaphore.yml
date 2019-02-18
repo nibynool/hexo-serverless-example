@@ -1,0 +1,15 @@
+version: v1.0
+name: Hexo Serverless Build Pipeline
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+blocks:
+  # A valid block so we don't do anything on the master branch
+  - name: Prepare
+    task:
+      jobs:
+        # Do something
+        - name: Set Java Version
+          commands:
+            - change-java-version 8
