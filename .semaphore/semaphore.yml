@@ -85,13 +85,15 @@ promotions:
     pipeline_file: demo.yml
     auto_promote_on:
       - result: passed
+        branch:
+          - ^2
   # The following lines have been commented out as custom settings are required for our demonstration sites
   #- name: Deploy Content to UAT
   #  pipeline_file: uat-content.yml
   #  auto_promote_on:
   #    - result: passed
   #      branch:
-  #        - develop
+  #        - ^develop$
   #- name: Deploy Infra to UAT
   #  pipeline_file: uat-infra.yml
   #- name: Deploy Content to Production
@@ -99,6 +101,6 @@ promotions:
   #  auto_promote_on:
   #    - result: passed
   #      branch:
-  #        - master
+  #        - ^master$
   #- name: Deploy Infra to Production
   #  pipeline_file: prod-infra.yml
