@@ -55,8 +55,7 @@ blocks:
         - name: Build Site
           commands:
             - npm run clean
-            - npm run generate
-            - npm run version-assets
+            - npm run build
             - cache store public-$(find source -type f -exec cat {} + | checksum) public
   # Run tests on the deployment files
   - name: Test Locally
