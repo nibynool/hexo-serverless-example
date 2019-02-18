@@ -19,7 +19,7 @@ provider:
 # Custom configuration options
 custom:
   # This is only required so I can maintain multiple demonstration sites
-  postname: 2019-02-18-ci-cd-pipeline
+  postname: 2019-02-18-ci-cd
   # This enables us to use the default stage definition, but override it from the command line
   stage: ${opt:stage, self:provider.stage}
   # This enables us to prepend the stage name for non-production environments
