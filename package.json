@@ -18,16 +18,26 @@
     "hexo-renderer-stylus": "^0.3.3",
     "hexo-server": "^0.3.1",
     "jest": "^24.0.0",
+    "markdownlint-cli": "^0.13.0",
+    "node-w3c-validator": "^1.2.1",
+    "pa11y-ci": "^2.1.1",
     "serverless-plugin-scripts": "^1.0.2",
     "serverless-s3-deploy": "^0.8.0"
   },
   "scripts": {
+    "jest": "jest",
+    "mdlint-drafts": "markdownlint --config .mdconfig ./source/_drafts",
+    "mdlint": "markdownlint --config .mdconfig ./source/_posts",
+    "precheck": "npm run jest && npm run mdlint",
     "clean": "hexo clean",
     "build": "hexo generate",
     "cleanbuild": "npm run clean && npm run build",
-    "linkcheck": "blcl --filter-level 3 --get --recursive --exclude http://2019-01-28-securing-s3.demo.alphageek.com.au.s3-website-us-east-1.amazonaws.com --exclude http://localhost:4000 --exclude http://dev./%3Cyour_domain%3E/ public",
-    "jest": "jest",
-    "test": "npm run cleanbuild && npm run jest && npm run linkcheck"
+    "linkcheck": "blcl --filter-level 3 --get --recursive --exclude /atom.xml --exclude /favicon.png --exclude http://2019-01-28-securing-s3.demo.alphageek.com.au.s3-website-us-east-1.amazonaws.com --exclude http://localhost:4000 --exclude http://dev./%3Cyour_domain%3E/ public",
+    "htmlcheck": "node-w3c-validator -v -s -i public/ || true",
+    "a11ycheck": "pa11y-ci public/*.html public/*/*.html public/*/*/*.html public/*/*/*/*.html public/*/*/*/*/*.html || true",
+    "validate": "npm run linkcheck && npm run htmlcheck && npm run a11ycheck",
+    "buildtest-local": "npm run precheck && npm run cleanbuild && npm run validate",
+    "precommit": "npm run buildtest-local"
   },
   "jest": {
     "testPathIgnorePatterns": [

@@ -1,0 +1,82 @@
+version: v1.0
+name: Hexo Demonstration Build Pipeline
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+blocks:
+  # Prepare the build environment
+  - name: Prepare
+    task:
+      jobs:
+        # Make sure we've got the right Java version configured
+        - name: Set Java Version
+          commands:
+            - change-java-version 8
+        # Run NPM install, using Semaphore's cache where possible
+        - name: NPM Install
+          commands:
+            # Update NPM because it's so old
+            - cache restore npm
+            - npm i -g npm
+            - cache store npm .nvm/versions/node/v8.11.3/lib/node_modules/npm
+            - checkout
+            # Reuse dependencies from cache and avoid installing them from scratch:
+            - cache restore node-modules-$(checksum package-lock.json)
+            - npm ci
+            - cache store node-modules-$(checksum package-lock.json) node_modules
+  # Run the validation routines that don't require a build
+  - name: Validate
+    task:
+      prologue:
+        commands:
+          - checkout
+          - cache restore npm
+          - cache restore node-modules-$(checksum package-lock.json)
+      jobs:
+        # Run the jest test suite
+        - name: Run Jest Tests
+          commands:
+            - npm run jest
+        # Run the Markdown linter
+        - name: MD Lint
+          commands:
+            - npm run mdlint
+  # Build the deployment files
+  - name: Build
+    task:
+      prologue:
+        commands:
+          - checkout
+          - cache restore npm
+          - cache restore node-modules-$(checksum package-lock.json)
+      jobs:
+        # Ensure we have a clean build directory, generate the files and add asset versioning
+        - name: Build Site
+          commands:
+            - npm run clean
+            - npm run generate
+            - npm run version-assets
+            - cache store public-$(find source -type f -exec cat {} + | checksum) public
+  # Run tests on the deployment files
+  - name: Test Locally
+    task:
+      prologue:
+        commands:
+          - checkout
+          - cache restore npm
+          - cache restore node-modules-$(checksum package-lock.json)
+          - cache restore public-$(find source -type f -exec cat {} + | checksum)
+      jobs:
+        # Check that all links are valid
+        - name: Test link validity
+          commands:
+            - npm run linkcheck
+        # Check that the HTML is valid
+        - name: Test W3C compatability
+          commands:
+            - npm run htmlcheck
+        # Check if we meet a11y standards
+        - name: Test Accessibility
+          commands:
+            - npm run a11ycheck
