@@ -1,3 +1,9 @@
+Conditions:
+  # This will be used to disable the security on the demonstration site to save on costs
+  isDev:
+    Fn::Equals:
+      - ${self:custom.stage}
+      - dev
 Resources:
   # Set-up an S3 bucket to store the site
   WebsiteS3Bucket:
@@ -43,12 +49,13 @@ Resources:
     Type: 'AWS::CloudFront::Distribution'
     Properties:
       DistributionConfig:
-        # AWS WAF has been removed to save cost
-#        WebACLId:
-#          Ref: CustomAuthorizationHeaderRestriction
+        WebACLId:
+          Fn::If:
+            - isDev
+            - Ref: CustomAuthorizationHeaderRestriction
+            - Ref: "AWS::NoValue"
         Aliases:
           - ${self:custom.domain.domainname}
-          - www.${self:custom.domain.domainname}
         CustomErrorResponses:
           - ErrorCode: '404'
             ResponsePagePath: "/error.html"
@@ -96,114 +103,6 @@ Resources:
       HostedZoneName: ${self:custom.domain.zonename}.
       Name: ${self:custom.domain.domainname}
       Type: 'A'
-  # DNS Record for www.domain
-  WebsiteWWWDNSRecord:
-    Type: "AWS::Route53::RecordSet"
-    Properties:
-      AliasTarget:
-        DNSName:
-          Fn::GetAtt:
-            - WebsiteCloudFrontDistribution
-            - DomainName
-        HostedZoneId: Z2FDTNDATAQYW2
-      # DNS Zone name (this is only required so I can maintain multiple demonstration sites, normally it would be `domain` instead of `zonename`)
-      HostedZoneName: ${self:custom.domain.zonename}.
-      Name: www.${self:custom.domain.domainname}
-      Type: 'A'
-
-  # AWS WAF has been removed to save cost
-#  # Predicate to match the authorization header
-#  CustomAuthorizationHeader:
-#    Type: AWS::WAF::ByteMatchSet
-#    Properties:
-#      ByteMatchTuples:
-#        -
-#          FieldToMatch:
-#            Type: HEADER
-#            Data: Authorization
-#          TargetString:
-#            Fn::Join:
-#              - " "
-#              - - Custom
-#                - "Password"
-#          TextTransformation: NONE
-#          PositionalConstraint: EXACTLY
-#      Name:
-#        Fn::Join:
-#          - "_"
-#          - - ${self:custom.domain.domainname}
-#            - Authorization
-#            - Header
-#  CustomAuthorizationHeaderRule:
-#    Type: AWS::WAF::Rule
-#    Properties:
-#      Name:
-#        Fn::Join:
-#          - "_"
-#          - - ${self:custom.domain.domainname}
-#            - Authorization
-#            - Header
-#            - Rule
-#      MetricName:
-#        Fn::Join:
-#          - ""
-#          - - ${self:custom.stage}
-#            # This value has been customised as the service name is not compatible with the permitted AWS naming scheme
-#            - Fn::Join: [ "", Fn::Split: [ "-", "${self:service.name}" ] ]
-#            - Authorization
-#            - Header
-#            - Rule
-#      Predicates:
-#        -
-#          DataId:
-#            Ref: CustomAuthorizationHeader
-#          Negated: false
-#          Type: ByteMatch
-#  CustomUserAgentHeader:
-#    Type: AWS::WAF::ByteMatchSet
-#    Properties:
-#      ByteMatchTuples:
-#        -
-#          FieldToMatch:
-#            Type: HEADER
-#            Data: User-Agent
-#          TargetString:
-#            Fn::Join:
-#              - " "
-#              - - ${self:custom.security.passwords.development}
-#                - "Tester"
-#          TextTransformation: NONE
-#          PositionalConstraint: EXACTLY
-#      Name:
-#        Fn::Join:
-#          - "_"
-#          - - ${self:custom.domain.domainname}
-#            - UserAgent
-#            - Header
-#  CustomUserAgentHeaderRule:
-#    Type: AWS::WAF::Rule
-#    Properties:
-#      Name:
-#        Fn::Join:
-#          - "_"
-#          - - ${self:custom.domain.domainname}
-#            - UserAgent
-#            - Header
-#            - Rule
-#      MetricName:
-#        Fn::Join:
-#          - ""
-#          - - ${self:custom.domain.domain}
-#            - ${self:custom.stage}
-#            - UserrAgent
-#            - Header
-#            - Rule
-#      Predicates:
-#        -
-#          DataId:
-#            Ref: CustomUserAgentHeader
-#          Negated: false
-#          Type: ByteMatch
   CloudFrontIdentity:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
     Properties:
@@ -214,3 +113,81 @@ Resources:
             - - ${self:custom.domain.domainname}
               - CloudFront
               - Identity
+  # Predicate to match the authorization header
+  CustomAuthorizationHeader:
+    Condition: isDev
+    Type: AWS::WAF::ByteMatchSet
+    Properties:
+      ByteMatchTuples:
+        -
+          FieldToMatch:
+            Type: HEADER
+            Data: Authorization
+          TargetString:
+            Fn::Join:
+              - " "
+              - - Custom
+                - "Password"
+          TextTransformation: NONE
+          PositionalConstraint: EXACTLY
+      Name:
+        Fn::Join:
+          - "_"
+          - - ${self:custom.domain.domainname}
+            - Authorization
+            - Header
+  CustomAuthorizationHeaderRule:
+    Condition: isDev
+    Type: AWS::WAF::Rule
+    Properties:
+      Name:
+        Fn::Join:
+          - "_"
+          - - ${self:custom.domain.domainname}
+            - Authorization
+            - Header
+            - Rule
+      MetricName:
+        Fn::Join:
+          - ""
+          - - ${self:custom.stage}
+            # This value has been customised as the service name is not compatible with the permitted AWS naming scheme
+            - Fn::Join: [ "", Fn::Split: [ "-", "${self:service.name}" ] ]
+            - Authorization
+            - Header
+            - Rule
+      Predicates:
+        -
+          DataId:
+            Ref: CustomAuthorizationHeader
+          Negated: false
+          Type: ByteMatch
+  CustomAuthorizationHeaderRestriction:
+    Condition: isDev
+    Type: AWS::WAF::WebACL
+    Properties:
+      DefaultAction:
+        Type: ALLOW
+      Name:
+        Fn::Join:
+          - "_"
+          - - ${self:custom.domain.domainname}
+            - Authorization
+            - Header
+            - Restriction
+      MetricName:
+        Fn::Join:
+          - ""
+          - - ${self:custom.stage}
+            # This value has been customised as the service name is not compatible with the permitted AWS naming scheme
+            - Fn::Join: [ "", Fn::Split: [ "-", "${self:service.name}" ] ]
+            - Authorization
+            - Header
+            - Restriction
+      Rules:
+        -
+          Action:
+            Type: ALLOW
+          Priority: 1
+          RuleId:
+            Ref: CustomAuthorizationHeaderRule
