@@ -21,7 +21,7 @@ provider:
     COSTCENTER: alphageek
     STAGE: prod
   # This has been added to assist with keeping my AWS account tidy
-  stackName: prodAgDemoPosts20190128SecuringS3
+  stackName: prodAgDemoPosts20190203UnitTesting
 
 # Custom configuration options
 custom:
