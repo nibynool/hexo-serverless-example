@@ -11,7 +11,7 @@ plugins:
 provider:
   name: aws
   # This has been updated since the initial deployment of the demo due to AWS updates
-  runtime: nodejs12.x
+  runtime: nodejs10.x
   # Some future functionality requires us to use us-east-1 at this time
   region: us-east-1
   # This setting is only required for my internal S3 management
@@ -112,7 +112,7 @@ custom:
 functions:
   # This function will be deployed to Lambda@Edge and rewrite URLs to include index.html
   urlrewrite:
-    name: ${self:service}-${self:custom.stage}-cf-url-rewriter
+    name: ${self:provider.stackName}-cf-url-rewriter
     handler: functions/urlRewrite.handler
     memorySize: 128
     timeout: 1
