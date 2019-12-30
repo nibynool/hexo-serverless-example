@@ -45,9 +45,9 @@ Resources:
       DistributionConfig:
         WebACLId:
           Fn::If:
-            - isProd
-            - Ref: "AWS::NoValue"
+            - isDev
             - Ref: CustomAuthorizationHeaderRestriction
+            - Ref: "AWS::NoValue"
         Aliases:
           - ${self:custom.domain.domainname}
         CustomErrorResponses:
@@ -140,3 +140,32 @@ Resources:
             Ref: CustomAuthorizationHeader
           Negated: false
           Type: ByteMatch
+  CustomAuthorizationHeaderRestriction:
+    Condition: isDev
+    Type: AWS::WAF::WebACL
+    Properties:
+      DefaultAction:
+        Type: ALLOW
+      Name:
+        Fn::Join:
+          - "_"
+          - - ${self:custom.domain.domainname}
+            - Authorization
+            - Header
+            - Restriction
+      MetricName:
+        Fn::Join:
+          - ""
+          - - ${self:custom.stage}
+            # This value has been customised as the service name is not compatible with the permitted AWS naming scheme
+            - Fn::Join: [ "", Fn::Split: [ "-", "${self:service.name}" ] ]
+            - Authorization
+            - Header
+            - Restriction
+      Rules:
+        -
+          Action:
+            Type: ALLOW
+          Priority: 1
+          RuleId:
+            Ref: CustomAuthorizationHeaderRule
