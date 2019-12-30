@@ -112,7 +112,7 @@ custom:
 functions:
   # This function will be deployed to Lambda@Edge and rewrite URLs to include index.html
   urlrewrite:
-    name: ${self:service}-${self:custom.stage}-cf-url-rewriter
+    name: ${self:provider.stackName}-cf-url-rewriter
     handler: functions/urlRewrite.handler
     memorySize: 128
     timeout: 1
