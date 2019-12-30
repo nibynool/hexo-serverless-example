@@ -9,11 +9,18 @@ plugins:
 # Configuration for AWS
 provider:
   name: aws
-  runtime: nodejs8.10
+  # This has been updated since the initial deployment of the demo due to AWS updates
+  runtime: nodejs12.x
   # Some future functionality requires us to use us-east-1 at this time
   region: us-east-1
   # This setting is only required for my internal S3 management
   deploymentBucket: serverless.${self:provider.region}
+  # These value have been added to allow me to account for costs
+  stackTags:
+    COSTCENTER: alphageek
+    STAGE: prod
+  # This has been added to assist with keeping my AWS account tidy
+  stackName: prodAgDemoPosts20190123SecuringTestEnvironment
 
 # Custom configuration options
 custom:
@@ -37,7 +44,9 @@ custom:
       # HTML Cache time for other environments
       other: 0
     cacheControlMaxAgeHTML: ${self:custom.domain.cacheControlMaxAgeHTMLByStage.${self:custom.stage}, self:custom.domain.cacheControlMaxAgeHTMLByStage.other}
-    sslCertificateARN: arn:aws:acm:us-east-1:165657443288:certificate/61d202ea-12f2-4282-b602-9c3b83183c7a
+    # This has been modified to allow SSL Certificates to be managed in an external CloudFormation stack
+    sslCertificateARN:
+      Fn::ImportValue: AgAcmProdSSLCertificate
   assets:
     targets:
       # Configuration for HTML files (overriding the default cache control age)
